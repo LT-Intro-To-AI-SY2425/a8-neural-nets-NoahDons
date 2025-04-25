@@ -51,7 +51,7 @@ with open("wine_data.txt", "r") as f:
 td = normalize(training_data)
 
 nn = NeuralNet(13, 3, 1)
-nn.train(td, iters=100_000, print_interval=1000, learning_rate=0.1)
+nn.train(td, iters=5000, print_interval=100, learning_rate=0.1)
 
 for i in nn.test_with_expected(td):
     print(f"desired: {i[1]}, actual: {i[2]}")
