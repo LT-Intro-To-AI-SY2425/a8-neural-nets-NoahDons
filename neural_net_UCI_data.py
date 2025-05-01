@@ -1,6 +1,7 @@
 from typing import Tuple
 from neural import *
-
+from sklearn.model_selection import train_test_split
+from neural import NeuralNet
 
 def parse_line(line: str) -> Tuple[List[float], List[float]]:
     """Splits line of CSV into inputs and output (transormfing output as appropriate)
@@ -12,10 +13,10 @@ def parse_line(line: str) -> Tuple[List[float], List[float]]:
         tuple of input list and output list
     """
     tokens = line.split(",")
-    out = int(tokens[0])
-    output = [1 if out == 1 else 0.5 if out == 2 else 1]
+    output = [tokens[5]]
+    #output = [1 if out == 1 else 0.5 if out == 2 else 1]
 
-    inpt = [float(x) for x in tokens[1:]]
+    inpt = [float(x) for x in tokens[:5]]
     return (inpt, output)
 
 
@@ -44,14 +45,51 @@ def normalize(data: List[Tuple[List[float], List[float]]]):
             data[i][0][j] = (data[i][0][j] - leasts[j]) / (mosts[j] - leasts[j])
     return data
 
+increment = 10
+i=0
+dataset = []
+with open("wine-quality-white-and-red.csv", "r") as file:
+    lines = file.readlines()
 
-with open("wine_data.txt", "r") as f:
-    training_data = [parse_line(line) for line in f.readlines() if len(line) > 4]
+header = True
+for line in lines:
+    if header:
+        header = False
+        continue  
+    
+    parts = line.strip().split(",")
+    wine_type = parts[0].lower()        
+    features = parts[1:]                
 
-td = normalize(training_data)
+    
+    input_vector = [float(x) for x in features]
+    
 
-nn = NeuralNet(13, 3, 1)
-nn.train(td, iters=5000, print_interval=100, learning_rate=0.1)
+    if wine_type == "red":
+        label = [1.0]
+    elif wine_type == "white":
+        label = [0.0]
+    
+    if i == increment:
+        dataset.append((input_vector, label))
+        i=0
+    else:
+        i+=1
+    
 
-for i in nn.test_with_expected(td):
-    print(f"desired: {i[1]}, actual: {i[2]}")
+normalized = normalize(dataset)
+
+model = NeuralNet(12, 1, 1)
+model.train(normalized)
+tests = model.test_with_expected(normalized)
+correct = 0
+incorrect = 0
+for test in tests:
+    print("Actual:", test[1])
+    print("Predicted:", test[2])
+    if int(test[2][0]+.5) == int(test[1][0]):
+        correct+=1
+    else:
+        incorrect+=1
+print(correct)
+print(incorrect)
